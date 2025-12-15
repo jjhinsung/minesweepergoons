@@ -10,11 +10,11 @@ Board::Board(int rows, int cols, int mines)
     placeMines();
     calculateNumbers();
     // TEMPORARY TEST
-    for (int row = 0; row < 10; row++) {
+    /*for (int row = 0; row < 10; row++) {
         for (int col = 0; col < 10; col++) {
             reveal(row, col);
         }
-    }
+    }*/
 
 }
 
@@ -167,3 +167,28 @@ void Board::floodFill(int r, int c) {
         }
     }
 }
+
+void Board::reset(int newRows, int newCols, int newMines) {
+    rows  = newRows;
+    cols  = newCols;
+    mines = newMines;
+
+    // rebuild grid (use std::vector consistently)
+    grid.clear();
+    grid.resize(rows, std::vector<Tile>(cols));
+
+    // reset tile state (optional because default Tile values already do this,
+    // but it's fine to keep)
+    for (int r = 0; r < rows; r++) {
+        for (int c = 0; c < cols; c++) {
+            grid[r][c].isBomb = false;
+            grid[r][c].isRevealed = false;
+            grid[r][c].isFlagged = false;
+            grid[r][c].number = 0;
+        }
+    }
+
+    placeMines();
+    calculateNumbers();
+}
+

@@ -10,6 +10,8 @@ public:
     void draw(sf::RenderWindow &window);
     void reveal(int r, int c);
     void toggleFlag(int r, int c);
+    void reset(int newRows, int newCols, int newMines);
+
 
 private:
     struct Tile {
