@@ -59,9 +59,6 @@ void Board::calculateNumbers() {
 
 
 void Board::draw(sf::RenderWindow &window) {
-    sf::RectangleShape rect;
-    rect.setSize(sf::Vector2f(tileSize, tileSize));
-
     float boardWidth  = cols * tileSize;
     float boardHeight = rows * tileSize;
 
@@ -72,27 +69,28 @@ void Board::draw(sf::RenderWindow &window) {
         for (int c = 0; c < cols; c++) {
             Tile &t = grid[r][c];
 
-            // 🎨 Decide color based on state
+            // 🧠 choose texture based on tile state
             if (!t.isRevealed) {
-                rect.setFillColor(
-                    t.isFlagged ? sf::Color::Red : sf::Color(80, 80, 80)
-                );
+                if (t.isFlagged)
+                    t.sprite.setTexture(flagTex);
+                else
+                    t.sprite.setTexture(hiddenTex);
             } else {
                 if (t.isBomb)
-                    rect.setFillColor(sf::Color::Black);
+                    t.sprite.setTexture(bombTex);
+                else if (t.number == 0)
+                    t.sprite.setTexture(emptyTex);
                 else
-                    rect.setFillColor(sf::Color(160, 160, 160));
+                    t.sprite.setTexture(numberTex[t.number - 1]);
             }
 
-            rect.setOutlineThickness(1);
-            rect.setOutlineColor(sf::Color::Black);
-
-            rect.setPosition(
+            // 📍 position sprite (centered board)
+            t.sprite.setPosition(
                 offsetX + c * tileSize,
                 offsetY + r * tileSize
             );
 
-            window.draw(rect);
+            window.draw(t.sprite);
         }
     }
 }
