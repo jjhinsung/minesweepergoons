@@ -9,6 +9,13 @@ Board::Board(int rows, int cols, int mines)
     loadTextures();
     placeMines();
     calculateNumbers();
+    // TEMPORARY TEST
+    for (int row = 0; row < 10; row++) {
+        for (int col = 0; col < 10; col++) {
+            reveal(row, col);
+        }
+    }
+
 }
 
 void Board::loadTextures() {
@@ -95,6 +102,68 @@ void Board::draw(sf::RenderWindow &window) {
     }
 }
 
-void Board::reveal(int r, int c) {}
-void Board::toggleFlag(int r, int c) {}
-void Board::floodFill(int r, int c) {}
+void Board::reveal(int r, int c) {
+    // bounds check
+    if (r < 0 || r >= rows || c < 0 || c >= cols)
+        return;
+
+    Tile &t = grid[r][c];
+
+    // do nothing if already revealed or flagged
+    if (t.isRevealed || t.isFlagged)
+        return;
+
+    // reveal this tile
+    t.isRevealed = true;
+
+    // if empty tile, expand
+    if (!t.isBomb && t.number == 0) {
+        floodFill(r, c);
+    }
+
+    // if bomb: later you'll handle game over here
+}
+
+void Board::toggleFlag(int r, int c) {
+    if (r < 0 || r >= rows || c < 0 || c >= cols)
+        return;
+
+    Tile &t = grid[r][c];
+
+    // don't allow flags on revealed tiles
+    if (t.isRevealed)
+        return;
+
+    t.isFlagged = !t.isFlagged;
+}
+
+
+void Board::floodFill(int r, int c) {
+    for (int dr = -1; dr <= 1; dr++) {
+        for (int dc = -1; dc <= 1; dc++) {
+            int nr = r + dr;
+            int nc = c + dc;
+
+            // skip center tile
+            if (dr == 0 && dc == 0)
+                continue;
+
+            // bounds check
+            if (nr < 0 || nr >= rows || nc < 0 || nc >= cols)
+                continue;
+
+            Tile &neighbor = grid[nr][nc];
+
+            // skip revealed or flagged tiles
+            if (neighbor.isRevealed || neighbor.isFlagged)
+                continue;
+
+            neighbor.isRevealed = true;
+
+            // recurse if neighbor is also empty
+            if (!neighbor.isBomb && neighbor.number == 0) {
+                floodFill(nr, nc);
+            }
+        }
+    }
+}

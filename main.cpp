@@ -16,6 +16,7 @@ int main() {
         window.clear();
         board.draw(window);
         window.display();
+
     }
 
     return 0;
