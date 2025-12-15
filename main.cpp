@@ -2,9 +2,9 @@
 #include "board.h"
 
 int main() {
-    sf::RenderWindow window(sf::VideoMode(600, 600), "Minesweeper");
+    sf::RenderWindow window(sf::VideoMode(400, 400), "Minesweeper");
 
-    Board board(9, 9, 10);
+    Board board(10, 10, 10);
 
     while (window.isOpen()) {
         sf::Event event;

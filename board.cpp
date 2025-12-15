@@ -57,21 +57,42 @@ void Board::calculateNumbers() {
     }
 }
 
+
 void Board::draw(sf::RenderWindow &window) {
+    sf::RectangleShape rect;
+    rect.setSize(sf::Vector2f(tileSize, tileSize));
+
+    float boardWidth  = cols * tileSize;
+    float boardHeight = rows * tileSize;
+
+    float offsetX = (window.getSize().x - boardWidth) / 2.f;
+    float offsetY = (window.getSize().y - boardHeight) / 2.f;
+
     for (int r = 0; r < rows; r++) {
         for (int c = 0; c < cols; c++) {
             Tile &t = grid[r][c];
 
+            // 🎨 Decide color based on state
             if (!t.isRevealed) {
-                t.sprite.setTexture(t.isFlagged ? flagTex : hiddenTex);
+                rect.setFillColor(
+                    t.isFlagged ? sf::Color::Red : sf::Color(80, 80, 80)
+                );
             } else {
-                if (t.isBomb) t.sprite.setTexture(bombTex);
-                else if (t.number == 0) t.sprite.setTexture(emptyTex);
-                else t.sprite.setTexture(numberTex[t.number - 1]);
+                if (t.isBomb)
+                    rect.setFillColor(sf::Color::Black);
+                else
+                    rect.setFillColor(sf::Color(160, 160, 160));
             }
 
-            t.sprite.setPosition(c * tileSize, r * tileSize);
-            window.draw(t.sprite);
+            rect.setOutlineThickness(1);
+            rect.setOutlineColor(sf::Color::Black);
+
+            rect.setPosition(
+                offsetX + c * tileSize,
+                offsetY + r * tileSize
+            );
+
+            window.draw(rect);
         }
     }
 }
