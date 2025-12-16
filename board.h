@@ -8,8 +8,15 @@ public:
     Board(int rows, int cols, int mines);
 
     void draw(sf::RenderWindow &window);
+    void checkWin();
     void reveal(int r, int c);
     void toggleFlag(int r, int c);
+    bool getTileFromPixel(int mouseX, int mouseY, int &r, int &c, sf::RenderWindow &window);
+    bool gameOver = false;
+    bool win = false;
+    bool isGameOver() const { return gameOver; }
+    bool didWin() const { return win; }
+
 
 private:
     struct Tile {

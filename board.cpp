@@ -1,4 +1,4 @@
-#include "Board.h"
+#include "board.h"
 #include <cstdlib>
 #include <ctime>
 
@@ -10,12 +10,30 @@ Board::Board(int rows, int cols, int mines)
     placeMines();
     calculateNumbers();
     // TEMPORARY TEST
-    for (int row = 0; row < 10; row++) {
+    /*for (int row = 0; row < 10; row++) {
         for (int col = 0; col < 10; col++) {
             reveal(row, col);
         }
-    }
+    }*/
 
+}
+
+bool Board::getTileFromPixel(int mouseX, int mouseY, int &r, int &c, sf::RenderWindow &window) {
+    float boardWidth  = cols * tileSize;
+    float boardHeight = rows * tileSize;
+
+    float offsetX = (window.getSize().x - boardWidth) / 2.f;
+    float offsetY = (window.getSize().y - boardHeight) / 2.f;
+
+    // Convert pixel → grid coordinates
+    c = (mouseX - offsetX) / tileSize;
+    r = (mouseY - offsetY) / tileSize;
+
+    // Check bounds
+    if (r < 0 || r >= rows || c < 0 || c >= cols)
+        return false;
+
+    return true;
 }
 
 void Board::loadTextures() {
@@ -102,68 +120,98 @@ void Board::draw(sf::RenderWindow &window) {
     }
 }
 
-void Board::reveal(int r, int c) {
-    // bounds check
-    if (r < 0 || r >= rows || c < 0 || c >= cols)
-        return;
-
-    Tile &t = grid[r][c];
-
-    // do nothing if already revealed or flagged
-    if (t.isRevealed || t.isFlagged)
-        return;
-
-    // reveal this tile
-    t.isRevealed = true;
-
-    // if empty tile, expand
-    if (!t.isBomb && t.number == 0) {
-        floodFill(r, c);
+void Board::checkWin() {
+    for (int r = 0; r < rows; r++) {
+        for (int c = 0; c < cols; c++) {
+            Tile &t = grid[r][c];
+            if (!t.isBomb && !t.isRevealed)
+                return;
+        }
     }
 
-    // if bomb: later you'll handle game over here
+    // all safe tiles revealed
+    gameOver = true;
+    win = true;
 }
 
-void Board::toggleFlag(int r, int c) {
-    if (r < 0 || r >= rows || c < 0 || c >= cols)
-        return;
+    void Board::reveal(int r, int c) {
+        // bounds check
+        if (r < 0 || r >= rows || c < 0 || c >= cols)
+            return;
 
-    Tile &t = grid[r][c];
+        Tile &t = grid[r][c];
 
-    // don't allow flags on revealed tiles
-    if (t.isRevealed)
-        return;
+        // do nothing if already revealed or flagged
+        if (t.isRevealed || t.isFlagged)
+            return;
 
-    t.isFlagged = !t.isFlagged;
-}
+        // reveal this tile
+        t.isRevealed = true;
+
+        // if empty tile, expand
+        if (!t.isBomb && t.number == 0) {
+            floodFill(r, c);
+        }
+
+        // 💥 LOSE CONDITION
+        if (t.isBomb) {
+            gameOver = true;
+            win = false;
+
+            // reveal all bombs
+            for (int i = 0; i < rows; i++) {
+                for (int j = 0; j < cols; j++) {
+                    if (grid[i][j].isBomb)
+                        grid[i][j].isRevealed = true;
+                }
+            }
+            return;
+
+        }
+        // 🏆 check win after each reveal
+        checkWin();
+    }
+
+    void Board::toggleFlag(int r, int c) {
+        if (r < 0 || r >= rows || c < 0 || c >= cols)
+            return;
+
+        Tile &t = grid[r][c];
+
+        // don't allow flags on revealed tiles
+        if (t.isRevealed)
+            return;
+
+        t.isFlagged = !t.isFlagged;
+    }
 
 
-void Board::floodFill(int r, int c) {
-    for (int dr = -1; dr <= 1; dr++) {
-        for (int dc = -1; dc <= 1; dc++) {
-            int nr = r + dr;
-            int nc = c + dc;
+    void Board::floodFill(int r, int c) {
+        for (int dr = -1; dr <= 1; dr++) {
+            for (int dc = -1; dc <= 1; dc++) {
+                int nr = r + dr;
+                int nc = c + dc;
 
-            // skip center tile
-            if (dr == 0 && dc == 0)
-                continue;
+                // skip center tile
+                if (dr == 0 && dc == 0)
+                    continue;
 
-            // bounds check
-            if (nr < 0 || nr >= rows || nc < 0 || nc >= cols)
-                continue;
+                // bounds check
+                if (nr < 0 || nr >= rows || nc < 0 || nc >= cols)
+                    continue;
 
-            Tile &neighbor = grid[nr][nc];
+                Tile &neighbor = grid[nr][nc];
 
-            // skip revealed or flagged tiles
-            if (neighbor.isRevealed || neighbor.isFlagged)
-                continue;
+                // skip revealed or flagged tiles
+                if (neighbor.isRevealed || neighbor.isFlagged)
+                    continue;
 
-            neighbor.isRevealed = true;
+                neighbor.isRevealed = true;
 
-            // recurse if neighbor is also empty
-            if (!neighbor.isBomb && neighbor.number == 0) {
-                floodFill(nr, nc);
+                // recurse if neighbor is also empty
+                if (!neighbor.isBomb && neighbor.number == 0) {
+                    floodFill(nr, nc);
+                }
             }
         }
     }
-}
