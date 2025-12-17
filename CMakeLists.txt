@@ -15,6 +15,7 @@ include_directories(/opt/homebrew/opt/sfml@2/include)
 add_executable(minesweepergoons
         main.cpp
         board.cpp
+        board.cpp
 )
 
 # Link SFML 2 libraries

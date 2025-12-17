@@ -11,6 +11,7 @@ public:
     void checkWin();
     void reveal(int r, int c);
     void toggleFlag(int r, int c);
+    void reset(int newRows, int newCols, int newMines);
     bool getTileFromPixel(int mouseX, int mouseY, int &r, int &c, sf::RenderWindow &window);
     bool gameOver = false;
     bool win = false;

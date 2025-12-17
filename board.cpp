@@ -215,3 +215,30 @@ void Board::checkWin() {
             }
         }
     }
+}
+
+void Board::reset(int newRows, int newCols, int newMines) {
+    rows  = newRows;
+    cols  = newCols;
+    mines = newMines;
+
+    // rebuild grid (use std::vector consistently)
+    grid.clear();
+    grid.resize(rows, std::vector<Tile>(cols));
+
+    // reset tile state (optional because default Tile values already do this,
+    // but it's fine to keep)
+    for (int r = 0; r < rows; r++) {
+        for (int c = 0; c < cols; c++) {
+            grid[r][c].isBomb = false;
+            grid[r][c].isRevealed = false;
+            grid[r][c].isFlagged = false;
+            grid[r][c].number = 0;
+        }
+    }
+
+    placeMines();
+    calculateNumbers();
+}
+
+    }
