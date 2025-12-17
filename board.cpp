@@ -94,7 +94,7 @@ void Board::draw(sf::RenderWindow &window) {
         for (int c = 0; c < cols; c++) {
             Tile &t = grid[r][c];
 
-            // 🧠 choose texture based on tile state
+            // choose texture based on tile state
             if (!t.isRevealed) {
                 if (t.isFlagged)
                     t.sprite.setTexture(flagTex);
@@ -109,7 +109,7 @@ void Board::draw(sf::RenderWindow &window) {
                     t.sprite.setTexture(numberTex[t.number - 1]);
             }
 
-            // 📍 position sprite (centered board)
+            // position sprite (centered board)
             t.sprite.setPosition(
                 offsetX + c * tileSize,
                 offsetY + r * tileSize
@@ -153,7 +153,7 @@ void Board::checkWin() {
             floodFill(r, c);
         }
 
-        // 💥 LOSE CONDITION
+        // LOSE CONDITION
         if (t.isBomb) {
             gameOver = true;
             win = false;
@@ -168,7 +168,7 @@ void Board::checkWin() {
             return;
 
         }
-        // 🏆 check win after each reveal
+        // check win after each reveal
         checkWin();
     }
 
