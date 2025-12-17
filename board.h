@@ -3,7 +3,8 @@
 #include <SFML/Graphics.hpp>
 #include <vector>
 
-class Board {
+class Board
+{
 public:
     Board(int rows, int cols, int mines);
 
@@ -15,12 +16,19 @@ public:
     bool getTileFromPixel(int mouseX, int mouseY, int &r, int &c, sf::RenderWindow &window);
     bool gameOver = false;
     bool win = false;
-    bool isGameOver() const { return gameOver; }
-    bool didWin() const { return win; }
+    bool isGameOver() const
+    {
+        return gameOver;
+    }
+    bool didWin() const
+    {
+        return win;
+    }
 
 
 private:
-    struct Tile {
+    struct Tile
+    {
         bool isBomb = false;
         bool isRevealed = false;
         bool isFlagged = false;

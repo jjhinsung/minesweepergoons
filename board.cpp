@@ -9,23 +9,18 @@ Board::Board(int rows, int cols, int mines)
     loadTextures();
     placeMines();
     calculateNumbers();
-    // TEMPORARY TEST
-    /*for (int row = 0; row < 10; row++) {
-        for (int col = 0; col < 10; col++) {
-            reveal(row, col);
-        }
-    }*/
 
 }
 
-bool Board::getTileFromPixel(int mouseX, int mouseY, int &r, int &c, sf::RenderWindow &window) {
+bool Board::getTileFromPixel(int mouseX, int mouseY, int &r, int &c, sf::RenderWindow &window)
+{
     float boardWidth  = cols * tileSize;
     float boardHeight = rows * tileSize;
 
     float offsetX = (window.getSize().x - boardWidth) / 2.f;
     float offsetY = (window.getSize().y - boardHeight) / 2.f;
 
-    // Convert pixel → grid coordinates
+    // Convert pixel to grid coordinates
     c = (mouseX - offsetX) / tileSize;
     r = (mouseY - offsetY) / tileSize;
 
@@ -36,7 +31,8 @@ bool Board::getTileFromPixel(int mouseX, int mouseY, int &r, int &c, sf::RenderW
     return true;
 }
 
-void Board::loadTextures() {
+void Board::loadTextures()
+{
     hiddenTex.loadFromFile("assets/hidden.png");
     flagTex.loadFromFile("assets/flag.png");
     bombTex.loadFromFile("assets/bomb.png");
@@ -47,33 +43,42 @@ void Board::loadTextures() {
     }
 }
 
-void Board::placeMines() {
+void Board::placeMines()
+{
     srand(time(nullptr));
     int placed = 0;
-    while (placed < mines) {
+    while (placed < mines)
+    {
         int r = rand() % rows;
         int c = rand() % cols;
-        if (!grid[r][c].isBomb) {
+        if (!grid[r][c].isBomb)
+        {
             grid[r][c].isBomb = true;
             placed++;
         }
     }
 }
 
-void Board::calculateNumbers() {
+void Board::calculateNumbers()
+{
     int dr[] = {-1,-1,-1,0,0,1,1,1};
     int dc[] = {-1,0,1,-1,1,-1,0,1};
 
-    for (int r = 0; r < rows; r++) {
-        for (int c = 0; c < cols; c++) {
+    for (int r = 0; r < rows; r++)
+    {
+        for (int c = 0; c < cols; c++)
+        {
             if (grid[r][c].isBomb) continue;
 
             int count = 0;
-            for (int i = 0; i < 8; i++) {
+            for (int i = 0; i < 8; i++)
+            {
                 int nr = r + dr[i];
                 int nc = c + dc[i];
-                if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
-                    if (grid[nr][nc].isBomb) count++;
+                if (nr >= 0 && nr < rows && nc >= 0 && nc < cols)
+                {
+                    if (grid[nr][nc].isBomb)
+                        count++;
                 }
             }
 
@@ -83,24 +88,30 @@ void Board::calculateNumbers() {
 }
 
 
-void Board::draw(sf::RenderWindow &window) {
+void Board::draw(sf::RenderWindow &window)
+{
     float boardWidth  = cols * tileSize;
     float boardHeight = rows * tileSize;
 
     float offsetX = (window.getSize().x - boardWidth) / 2.f;
     float offsetY = (window.getSize().y - boardHeight) / 2.f;
 
-    for (int r = 0; r < rows; r++) {
-        for (int c = 0; c < cols; c++) {
+    for (int r = 0; r < rows; r++)
+    {
+        for (int c = 0; c < cols; c++)
+        {
             Tile &t = grid[r][c];
 
-            // 🧠 choose texture based on tile state
-            if (!t.isRevealed) {
+            // choose texture based on tile state
+            if (!t.isRevealed)
+            {
                 if (t.isFlagged)
                     t.sprite.setTexture(flagTex);
                 else
                     t.sprite.setTexture(hiddenTex);
-            } else {
+            }
+            else
+            {
                 if (t.isBomb)
                     t.sprite.setTexture(bombTex);
                 else if (t.number == 0)
@@ -109,7 +120,7 @@ void Board::draw(sf::RenderWindow &window) {
                     t.sprite.setTexture(numberTex[t.number - 1]);
             }
 
-            // 📍 position sprite (centered board)
+            // position sprite (centered board)
             t.sprite.setPosition(
                 offsetX + c * tileSize,
                 offsetY + r * tileSize
@@ -120,7 +131,8 @@ void Board::draw(sf::RenderWindow &window) {
     }
 }
 
-void Board::checkWin() {
+void Board::checkWin()
+{
     for (int r = 0; r < rows; r++) {
         for (int c = 0; c < cols; c++) {
             Tile &t = grid[r][c];
@@ -134,7 +146,8 @@ void Board::checkWin() {
     win = true;
 }
 
-    void Board::reveal(int r, int c) {
+    void Board::reveal(int r, int c)
+    {
         // bounds check
         if (r < 0 || r >= rows || c < 0 || c >= cols)
             return;
@@ -149,18 +162,22 @@ void Board::checkWin() {
         t.isRevealed = true;
 
         // if empty tile, expand
-        if (!t.isBomb && t.number == 0) {
+        if (!t.isBomb && t.number == 0)
+        {
             floodFill(r, c);
         }
 
-        // 💥 LOSE CONDITION
-        if (t.isBomb) {
+        // LOSE CONDITION
+        if (t.isBomb)
+        {
             gameOver = true;
             win = false;
 
             // reveal all bombs
-            for (int i = 0; i < rows; i++) {
-                for (int j = 0; j < cols; j++) {
+            for (int i = 0; i < rows; i++)
+            {
+                for (int j = 0; j < cols; j++)
+                {
                     if (grid[i][j].isBomb)
                         grid[i][j].isRevealed = true;
                 }
@@ -168,11 +185,12 @@ void Board::checkWin() {
             return;
 
         }
-        // 🏆 check win after each reveal
+        // check win after each reveal
         checkWin();
     }
 
-    void Board::toggleFlag(int r, int c) {
+    void Board::toggleFlag(int r, int c)
+    {
         if (r < 0 || r >= rows || c < 0 || c >= cols)
             return;
 
@@ -186,9 +204,12 @@ void Board::checkWin() {
     }
 
 
-    void Board::floodFill(int r, int c) {
-        for (int dr = -1; dr <= 1; dr++) {
-            for (int dc = -1; dc <= 1; dc++) {
+    void Board::floodFill(int r, int c)
+    {
+        for (int dr = -1; dr <= 1; dr++)
+        {
+            for (int dc = -1; dc <= 1; dc++)
+            {
                 int nr = r + dr;
                 int nc = c + dc;
 
@@ -217,7 +238,8 @@ void Board::checkWin() {
     }
 
 
-void Board::reset(int newRows, int newCols, int newMines) {
+void Board::reset(int newRows, int newCols, int newMines)
+{
     rows  = newRows;
     cols  = newCols;
     mines = newMines;
@@ -226,10 +248,11 @@ void Board::reset(int newRows, int newCols, int newMines) {
     grid.clear();
     grid.resize(rows, std::vector<Tile>(cols));
 
-    // reset tile state (optional because default Tile values already do this,
-    // but it's fine to keep)
-    for (int r = 0; r < rows; r++) {
-        for (int c = 0; c < cols; c++) {
+    // reset tile state
+    for (int r = 0; r < rows; r++)
+    {
+        for (int c = 0; c < cols; c++)
+        {
             grid[r][c].isBomb = false;
             grid[r][c].isRevealed = false;
             grid[r][c].isFlagged = false;
