@@ -1,6 +1,6 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
-#include "Board.h"
+#include "board.h"
 
 using namespace std;
 
@@ -36,7 +36,6 @@ static Button makeButton(const sf::Font& font, const string& text, float x, floa
     b.label.setCharacterSize(18);
     b.label.setFillColor(sf::Color::White);
 
-    // center label
     sf::FloatRect tb = b.label.getLocalBounds();
     b.label.setOrigin(tb.left + tb.width / 2.f, tb.top + tb.height / 2.f);
     b.label.setPosition(x + w / 2.f, y + h / 2.f);
@@ -48,14 +47,23 @@ int main() {
     sf::RenderWindow window(sf::VideoMode(800, 800), "Minesweeper");
     window.setFramerateLimit(60);
 
-    // Load font for UI
-    sf::Font font;
-    if (!font.loadFromFile("assets/arial.ttf")) {
+    // UI fonts (load ONCE)
+    sf::Font uiFont;
+    if (!uiFont.loadFromFile("assets/arial.ttf")) {
         cout << "Missing font: assets/arial.ttf\n";
         return 1;
     }
 
+    sf::Font endFont;
+    if (!endFont.loadFromFile("assets/SuperJoyful-lxwPq.ttf")) {
+        cout << "Missing font: assets/SuperJoyful-lxwPq.ttf\n";
+        return 1;
+    }
+
     Settings s;
+    // Make sure bombs valid for size
+    s.bombs = clampInt(s.bombs, 1, s.size * s.size - 1);
+
     Board board(s.size, s.size, s.bombs);
 
     bool panelOpen = false;
@@ -67,49 +75,56 @@ int main() {
     panel.setOutlineColor(sf::Color::White);
     panel.setPosition(20.f, 20.f);
 
-    sf::Text title("Settings (P to close)", font, 20);
+    sf::Text title("Settings (P to close)", uiFont, 20);
     title.setFillColor(sf::Color::White);
     title.setPosition(35.f, 30.f);
 
-    sf::Text sizeText("", font, 18);
+    sf::Text sizeText("", uiFont, 18);
     sizeText.setFillColor(sf::Color::White);
     sizeText.setPosition(35.f, 80.f);
 
-    sf::Text bombsText("", font, 18);
+    sf::Text bombsText("", uiFont, 18);
     bombsText.setFillColor(sf::Color::White);
     bombsText.setPosition(35.f, 140.f);
 
     // Buttons
-    Button sizeMinus = makeButton(font, "-", 220.f, 75.f, 40.f, 35.f);
-    Button sizePlus  = makeButton(font, "+", 270.f, 75.f, 40.f, 35.f);
+    Button sizeMinus = makeButton(uiFont, "-", 220.f, 75.f, 40.f, 35.f);
+    Button sizePlus  = makeButton(uiFont, "+", 270.f, 75.f, 40.f, 35.f);
 
-    Button bombMinus = makeButton(font, "-", 220.f, 135.f, 40.f, 35.f);
-    Button bombPlus  = makeButton(font, "+", 270.f, 135.f, 40.f, 35.f);
+    Button bombMinus = makeButton(uiFont, "-", 220.f, 135.f, 40.f, 35.f);
+    Button bombPlus  = makeButton(uiFont, "+", 270.f, 135.f, 40.f, 35.f);
 
-    Button applyBtn  = makeButton(font, "Apply", 35.f, 200.f, 130.f, 45.f);
-    Button closeBtn  = makeButton(font, "Close", 180.f, 200.f, 130.f, 45.f);
+    Button applyBtn  = makeButton(uiFont, "Apply", 35.f, 200.f, 130.f, 45.f);
+    Button closeBtn  = makeButton(uiFont, "Close", 180.f, 200.f, 130.f, 45.f);
+
+    // End text (create once; update string when needed)
+    sf::Text endText("", endFont, 48);
+    endText.setFillColor(sf::Color::White);
+    endText.setPosition(200.f, 200.f);
 
     while (window.isOpen()) {
         sf::Event event;
+
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed) {
                 window.close();
+                continue;
             }
 
-            // Toggle panel
-            if (event.type == sf::Event::KeyPressed) {
-                if (event.key.code == sf::Keyboard::P) {
-                    panelOpen = !panelOpen;
-                }
+            // Toggle panel (ONLY ONCE)
+            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::P) {
+                panelOpen = !panelOpen;
+                continue;
+            }
 
-                // Keyboard controls (work even when panel is closed)
+            // Keyboard changes to settings (optional: apply immediately)
+            if (event.type == sf::Event::KeyPressed) {
                 bool changed = false;
 
                 if (event.key.code == sf::Keyboard::Up) {
                     s.size = clampInt(s.size + 1, s.minSize, s.maxSize);
                     changed = true;
-                }
-                if (event.key.code == sf::Keyboard::Down) {
+                } else if (event.key.code == sf::Keyboard::Down) {
                     s.size = clampInt(s.size - 1, s.minSize, s.maxSize);
                     changed = true;
                 }
@@ -120,83 +135,79 @@ int main() {
                 if (event.key.code == sf::Keyboard::Right) {
                     s.bombs = clampInt(s.bombs + 1, 1, maxBombsAllowed);
                     changed = true;
-                }
-                if (event.key.code == sf::Keyboard::Left) {
+                } else if (event.key.code == sf::Keyboard::Left) {
                     s.bombs = clampInt(s.bombs - 1, 1, maxBombsAllowed);
                     changed = true;
                 }
 
-                // Apply instantly on keyboard changes
-                if (changed) {
+                // Apply instantly only when panel is closed (avoids “UI editing flicker” feeling)
+                if (changed && !panelOpen) {
                     board.reset(s.size, s.size, s.bombs);
                 }
             }
 
-            // Mouse clicks on panel buttons
-            if (panelOpen &&
-                event.type == sf::Event::MouseButtonPressed &&
-                event.mouseButton.button == sf::Mouse::Left) {
-
+            // Mouse input
+            if (event.type == sf::Event::MouseButtonPressed) {
                 sf::Vector2f mouse = window.mapPixelToCoords(sf::Mouse::getPosition(window));
 
-                int maxBombsAllowed = s.size * s.size - 1;
+                // If panel is open, handle panel clicks first and DO NOT click the board
+                if (panelOpen && event.mouseButton.button == sf::Mouse::Left) {
+                    int maxBombsAllowed = s.size * s.size - 1;
 
-                if (sizeMinus.contains(mouse)) {
-                    s.size = clampInt(s.size - 1, s.minSize, s.maxSize);
-                    s.bombs = clampInt(s.bombs, 1, s.size * s.size - 1);
-                    board.reset(s.size, s.size, s.bombs);
-                } else if (sizePlus.contains(mouse)) {
-                    s.size = clampInt(s.size + 1, s.minSize, s.maxSize);
-                    s.bombs = clampInt(s.bombs, 1, s.size * s.size - 1);
-                    board.reset(s.size, s.size, s.bombs);
-                } else if (bombMinus.contains(mouse)) {
-                    s.bombs = clampInt(s.bombs - 1, 1, maxBombsAllowed);
-                    board.reset(s.size, s.size, s.bombs);
-                } else if (bombPlus.contains(mouse)) {
-                    s.bombs = clampInt(s.bombs + 1, 1, maxBombsAllowed);
-                    board.reset(s.size, s.size, s.bombs);
-                } else if (applyBtn.contains(mouse)) {
-                    board.reset(s.size, s.size, s.bombs);
-                } else if (closeBtn.contains(mouse)) {
-                    panelOpen = false;
+                    if (sizeMinus.contains(mouse)) {
+                        s.size = clampInt(s.size - 1, s.minSize, s.maxSize);
+                        s.bombs = clampInt(s.bombs, 1, s.size * s.size - 1);
+                    } else if (sizePlus.contains(mouse)) {
+                        s.size = clampInt(s.size + 1, s.minSize, s.maxSize);
+                        s.bombs = clampInt(s.bombs, 1, s.size * s.size - 1);
+                    } else if (bombMinus.contains(mouse)) {
+                        s.bombs = clampInt(s.bombs - 1, 1, maxBombsAllowed);
+                    } else if (bombPlus.contains(mouse)) {
+                        s.bombs = clampInt(s.bombs + 1, 1, maxBombsAllowed);
+                    } else if (applyBtn.contains(mouse)) {
+                        board.reset(s.size, s.size, s.bombs);
+                    } else if (closeBtn.contains(mouse)) {
+                        panelOpen = false;
+                    }
+
+                    // Panel consumed the click; do not also click board.
+                    continue;
+                }
+
+                // If game over, ignore board clicks
+                if (board.isGameOver()) {
+                    continue;
+                }
+
+                // Click board (when panel not consuming input)
+                int row, col;
+                bool valid = board.getTileFromPixel(
+                    event.mouseButton.x,
+                    event.mouseButton.y,
+                    row,
+                    col,
+                    window
+                );
+
+                if (!valid) continue;
+
+                if (event.mouseButton.button == sf::Mouse::Left) {
+                    board.reveal(row, col);
+                } else if (event.mouseButton.button == sf::Mouse::Right) {
+                    board.toggleFlag(row, col);
                 }
             }
         }
-        if (event.type == sf::Event::MouseButtonPressed) {
-            int row, col;
-            if (board.isGameOver())
-                continue;
-            bool valid = board.getTileFromPixel(
-                event.mouseButton.x,
-                event.mouseButton.y,
-                row,
-                col,
-                window
-            );
 
-            if (!valid) continue;
-
-            // LEFT CLICK → reveal
-            if (event.mouseButton.button == sf::Mouse::Left) {
-                board.reveal(row, col);
-            }
-
-            // RIGHT CLICK → flag
-            if (event.mouseButton.button == sf::Mouse::Right) {
-                board.toggleFlag(row, col);
-            }
-        }
-
-
-        // update text each frame
+        // Update UI text each frame
         sizeText.setString("Grid Size: " + to_string(s.size) + " x " + to_string(s.size));
         bombsText.setString("Bombs: " + to_string(s.bombs));
 
+        // Draw (ONLY ONCE PER FRAME)
         window.clear(sf::Color::Black);
 
         board.draw(window);
 
-        // draw panel on top
         if (panelOpen) {
             window.draw(panel);
             window.draw(title);
@@ -212,27 +223,13 @@ int main() {
             window.draw(closeBtn.box);  window.draw(closeBtn.label);
         }
 
-        window.display();
         if (board.isGameOver()) {
-            sf::Font font;
-            font.loadFromFile("assets/SuperJoyful-lxwPq.ttf");
-
-            sf::Text text;
-            text.setFont(font);
-            text.setCharacterSize(48);
-            text.setFillColor(sf::Color::White);
-
-            if (board.didWin())
-                text.setString("YOU WIN");
-            else
-                text.setString("GAME OVER");
-
-            text.setPosition(200, 200); // simple center-ish
-            window.draw(text);
+            if (board.didWin()) endText.setString("YOU WIN");
+            else               endText.setString("GAME OVER");
+            window.draw(endText);
         }
+
         window.display();
-
-
     }
 
     return 0;

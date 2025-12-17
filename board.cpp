@@ -215,7 +215,7 @@ void Board::checkWin() {
             }
         }
     }
-}
+
 
 void Board::reset(int newRows, int newCols, int newMines) {
     rows  = newRows;
@@ -241,4 +241,4 @@ void Board::reset(int newRows, int newCols, int newMines) {
     calculateNumbers();
 }
 
-    }
+
